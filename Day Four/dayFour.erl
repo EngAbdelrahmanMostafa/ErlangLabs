@@ -1,5 +1,5 @@
 -module(dayFour).
--export([start/0,init/0,sleep/1]).
+-export([start/0,init/0,sleep/1,startPong/0,startPing/1,initPing/1,initPong/0]).
 
 %-----------------day4 begins --------
 % process pattern
@@ -45,4 +45,40 @@ sleep(T)->
     end.
 %---------------End of Sleep Function -------------
 
-%--------------------
+%--------------------Ping-Pong Example-------------
+
+%-------------------ping Code ---------------------
+startPing(M) ->
+    Pid=spawn (dayFour,initPing,[M]),
+    register(ping,Pid).
+initPing(M)->
+    dayFour:startPong(),
+    loopPing(M).
+loopPing(0)->
+    pong ! stop,
+    io:format("Ping Pong processes finished ~n",[]);
+loopPing(M)->
+    pong ! M ,
+    io:format("Ping for : ~p time ~n",[M]),
+    receive
+        stop ->
+            true;
+        M ->
+            loopPing (M-1)
+    end.
+
+%------------------pong code-----------------------
+startPong() ->
+    Pid=spawn(dayFour,initPong,[]),
+    register(pong,Pid).
+initPong()->
+    loopPong().
+loopPong()->
+    receive
+        stop ->
+            true;
+        Msg -> 
+            ping ! Msg ,
+            io:format("original message N= ~p~n",[Msg]),
+            loopPong()
+    end.
